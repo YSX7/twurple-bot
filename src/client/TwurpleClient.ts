@@ -21,8 +21,6 @@ import { CommandParser } from './CommandParser'
 import type { ChatterState } from './ChatMessage'
 import type { CommandArguments } from './CommandParser'
 import { EventSubClient } from './EventSubClient'
-import { ChatClient } from '@twurple/chat'
-import { channel } from 'diagnostics_channel'
 
 export type TwurpleTokens = AccessToken & Omit<RefreshingAuthProviderConfig, 'onRefresh'>
 
@@ -268,10 +266,6 @@ export class TwurpleClient extends (EventEmitter as { new(): TwurpleEmitter }) {
 
   async say(channel: string, message: string): Promise<[string]> {
     return await this.tmi.say(channel, message)
-  }
-
-  async raw(message: string): Promise<[string]> {
-    return await this.tmi.raw(message)
   }
 
   async action(channel: string, message: string): Promise<[string]> {
