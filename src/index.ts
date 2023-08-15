@@ -10,7 +10,7 @@ const client = new TwurpleClient({
 })
 
 client.on('message', (msg) => {
-  if (msg.text.startsWith(client.config.prefix)) {
+  if (msg.text.startsWith(client.config.prefix) && msg.messageType !== 'whisper') {
     return client.execCommand('sounds', msg)
   }
 
