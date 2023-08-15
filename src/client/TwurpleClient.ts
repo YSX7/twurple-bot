@@ -10,7 +10,7 @@ import { ApiClient } from '@twurple/api'
 import { Client } from '@twurple/auth-tmi'
 import { RefreshingAuthProvider } from '@twurple/auth'
 import type { ChatUserstate } from '@twurple/auth-tmi'
-import type { AccessToken, RefreshConfig } from '@twurple/auth'
+import type { AccessToken, RefreshingAuthProviderConfig } from '@twurple/auth'
 
 import { Logger } from './Logger'
 import { Server } from '../server'
@@ -21,8 +21,10 @@ import { CommandParser } from './CommandParser'
 import type { ChatterState } from './ChatMessage'
 import type { CommandArguments } from './CommandParser'
 import { EventSubClient } from './EventSubClient'
+import { ChatClient } from '@twurple/chat'
+import { channel } from 'diagnostics_channel'
 
-export type TwurpleTokens = AccessToken & Omit<RefreshConfig, 'onRefresh'>
+export type TwurpleTokens = AccessToken & Omit<RefreshingAuthProviderConfig, 'onRefresh'>
 
 export interface TwurpleConfig extends TwurpleTokens {
   channels: string[]
@@ -110,16 +112,15 @@ export class TwurpleClient extends (EventEmitter as { new(): TwurpleEmitter }) {
     this.auth = new RefreshingAuthProvider(
       {
         clientId: this.config.clientId,
-        clientSecret: this.config.clientSecret,
-        onRefresh: (userId, newTokenData) => {
-          this.logger.info(JSON.stringify(newTokenData))
-
-          this.updateConfig(newTokenData) },
-        onRefreshFailure:(userId) =>
-          this.logger.info(`Login with twitch http://${this.config.server.hostname}:${this.config.server.port}/twitch/auth`)
-        
+        clientSecret: this.config.clientSecret
       }
     )
+    this.auth.onRefresh((userId, newTokenData) => {
+      this.logger.info(JSON.stringify(newTokenData))
+      this.updateConfig(newTokenData)
+    })
+    this.auth.onRefreshFailure((userId) =>
+      this.logger.info(`Login with twitch http://${this.config.server.hostname}:${this.config.server.port}/twitch/auth`))
 
     this.server = new Server(this)
 
@@ -127,7 +128,7 @@ export class TwurpleClient extends (EventEmitter as { new(): TwurpleEmitter }) {
       this.logger.info(`Server now listening on http://${this.config.server.hostname}:${this.config.server.port}`)
     })
 
-    if (!this.db.data.accessToken){
+    if (!this.db.data.accessToken) {
       this.logger.info(`Login with twitch http://${this.config.server.hostname}:${this.config.server.port}/twitch/auth`)
       return
     }
@@ -267,6 +268,10 @@ export class TwurpleClient extends (EventEmitter as { new(): TwurpleEmitter }) {
 
   async say(channel: string, message: string): Promise<[string]> {
     return await this.tmi.say(channel, message)
+  }
+
+  async raw(message: string): Promise<[string]> {
+    return await this.tmi.raw(message)
   }
 
   async action(channel: string, message: string): Promise<[string]> {

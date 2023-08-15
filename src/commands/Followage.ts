@@ -77,7 +77,7 @@ export default class Followage extends BaseCommand {
   }
 
   async getFollows(user: string, followedUser: string) {
-    const { total, data } = await this.client.api.users.getFollows({ user, followedUser })
+    const { total, data } = await this.client.api.channels.getFollowedChannels(user, followedUser)
     return {
       total,
       user: data[0]
